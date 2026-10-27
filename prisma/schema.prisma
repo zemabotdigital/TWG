@@ -1,0 +1,226 @@
+// Travel With Guru — data model
+// SQLite for zero-setup hosting. To move to Postgres later:
+// change provider to "postgresql", point DATABASE_URL at the new server, re-run migrations.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// Admin accounts that can sign in to /admin
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// Satsangs, discourses, retreats, Guru Jayanti observances — anything on the monthly calendar
+model Event {
+  id               String      @id @default(cuid())
+  slug             String      @unique
+  title            String
+  summary          String
+  description      String
+  category         String      @default("Satsang")
+  startsAt         DateTime
+  endsAt           DateTime?
+  venueName        String
+  venueAddress     String      @default("")
+  city             String      @default("")
+  isOnline         Boolean     @default(false)
+  onlineUrl        String?
+  coverImage       String?
+  capacity         Int?
+  contributionNote String      @default("Participation is free. Offerings are voluntary.")
+  status           EventStatus @default(PUBLISHED)
+  featured         Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  registrations EventRegistration[]
+
+  @@index([startsAt])
+  @@index([status, startsAt])
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+model EventRegistration {
+  id        String        @id @default(cuid())
+  eventId   String
+  event     Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String
+  city      String        @default("")
+  seats     Int           @default(1)
+  message   String        @default("")
+  status    BookingStatus @default(PENDING)
+  adminNote String        @default("")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([eventId, createdAt])
+  @@index([status])
+}
+
+/// A dated pilgrimage departure — the monthly Pashupatinath yatra
+model Yatra {
+  id             String      @id @default(cuid())
+  slug           String      @unique
+  title          String
+  summary        String
+  description    String
+  destination    String      @default("Pashupatinath, Kathmandu, Nepal")
+  departureDate  DateTime
+  returnDate     DateTime
+  departureCity  String      @default("Kochi")
+  durationNights Int         @default(4)
+  seatsTotal     Int         @default(30)
+  priceFrom      Int? // in INR; null renders as "on request"
+  priceNote      String      @default("Per person, twin sharing. Excludes airfare unless stated.")
+  inclusions     String      @default("[]") // JSON array of strings
+  exclusions     String      @default("[]") // JSON array of strings
+  itinerary      String      @default("[]") // JSON array of { day, title, detail }
+  coverImage     String?
+  status         YatraStatus @default(ANNOUNCED)
+  featured       Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  bookings YatraBooking[]
+
+  @@index([departureDate])
+  @@index([status, departureDate])
+}
+
+enum YatraStatus {
+  DRAFT
+  ANNOUNCED
+  FILLING
+  FULL
+  CLOSED
+  COMPLETED
+}
+
+model YatraBooking {
+  id            String        @id @default(cuid())
+  reference     String        @unique
+  yatraId       String
+  yatra         Yatra         @relation(fields: [yatraId], references: [id], onDelete: Cascade)
+  name          String
+  email         String
+  phone         String
+  whatsapp      String        @default("")
+  city          String        @default("")
+  travellers    Int           @default(1)
+  passportReady Boolean       @default(false)
+  message       String        @default("")
+  status        BookingStatus @default(PENDING)
+  amountQuoted  Int?
+  amountPaid    Int           @default(0)
+  paymentNote   String        @default("")
+  adminNote     String        @default("")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([yatraId, createdAt])
+  @@index([status])
+}
+
+/// One-to-one time with Maharaj
+model Appointment {
+  id          String          @id @default(cuid())
+  reference   String          @unique
+  name        String
+  email       String
+  phone       String
+  city        String          @default("")
+  mode        AppointmentMode @default(IN_PERSON)
+  topic       String
+  message     String          @default("")
+  preferredAt DateTime
+  altAt       DateTime?
+  confirmedAt DateTime?
+  durationMin Int             @default(30)
+  meetingLink String          @default("")
+  status      BookingStatus   @default(PENDING)
+  adminNote   String          @default("")
+
+  /// Which CTA route produced this request, and where from.
+  routeKey    String          @default("maharaj_appointment")
+  sourcePage  String          @default("")
+
+  /// Outbound delivery to the WhatsApp automation platform.
+  webhookStatus   WebhookStatus @default(PENDING)
+  webhookAttempts Int           @default(0)
+  webhookLastError String       @default("")
+  webhookSentAt   DateTime?
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([preferredAt])
+  @@index([webhookStatus])
+  @@index([status, createdAt])
+}
+
+enum AppointmentMode {
+  IN_PERSON
+  VIDEO_CALL
+  PHONE_CALL
+}
+
+/// Shared lifecycle for every kind of request that reaches the dashboard
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+  COMPLETED
+}
+
+enum WebhookStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+/// One row per outbound delivery attempt to the automation platform.
+/// Kept separate from the request itself so retries leave an audit trail
+/// rather than overwriting the previous attempt.
+model WebhookDelivery {
+  id          String        @id @default(cuid())
+  requestId   String
+  requestType String
+  endpoint    String
+  payload     String
+  status      WebhookStatus @default(PENDING)
+  attempt     Int           @default(1)
+  httpStatus  Int?
+  error       String        @default("")
+  createdAt   DateTime      @default(now())
+
+  @@index([requestId])
+  @@index([status, createdAt])
+}
+
+/// Key/value settings edited from the dashboard (store URL, contact details)
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

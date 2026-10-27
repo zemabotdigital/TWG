@@ -1,0 +1,306 @@
+@import "tailwindcss";
+
+/* ════════════════════════════════════════════════════════════════════
+   TRAVEL WITH GURU — design system
+
+   Typography and colour follow the A Soulful Rebellion house style:
+     · Ovo for headings — serif, single weight, tight negative tracking
+     · Almarai for body — sans, generous 1.8 line-height
+     · deep teal-ink text, aubergine darks, dusty clay accent
+     · square corners and 3px borders on every control
+     · shadows tinted mauve rather than grey
+
+   The Shiva photography sits inside this palette: the slate of the
+   murti and the teal-ink are close neighbours, so the imagery reads as
+   part of the system rather than pasted into it.
+   ════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  --font-display: var(--font-cinzel), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-almarai), ui-sans-serif, system-ui, sans-serif;
+
+  /* Ink — deep teal-navy, the primary text colour */
+  --color-ink-950: #081419;
+  --color-ink-900: #0f232c;
+  --color-ink-800: #17323e;
+  --color-ink-700: #274856;
+  --color-ink-600: #44606d;
+  --color-ink-500: #6b8491;
+  --color-ink-400: #94a7b1;
+  --color-ink-300: #bcc9d0;
+  --color-ink-200: #dbe3e7;
+
+  /* Aubergine — the dark sections and primary fills */
+  --color-plum-900: #14001b;
+  --color-plum-800: #1f002a;
+  --color-plum-700: #330b42;
+  --color-plum-600: #594457;
+  --color-plum-400: #928081;
+
+  /* Clay — the dusty rose accent */
+  --color-clay-200: #ecd9d3;
+  --color-clay-300: #ddbfb6;
+  --color-clay-400: #c5978c;
+  --color-clay-500: #ab7566;
+  --color-clay-600: #8f5a47;
+  --color-clay-700: #70442f;
+
+  /* Paper */
+  --color-paper-50: #ffffff;
+  --color-paper-100: #fbf9f8;
+  --color-paper-200: #f4efed;
+  --color-paper-300: #e7dedb;
+
+  /* Semantic tokens — these flip in dark mode */
+  --color-surface: var(--color-paper-100);
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: var(--color-paper-200);
+  --color-surface-inverse: var(--color-plum-800);
+  --color-content: var(--color-ink-900);
+  --color-content-muted: var(--color-ink-700);
+  --color-content-subtle: var(--color-ink-600);
+  --color-content-inverse: #ffffff;
+  --color-line: var(--color-paper-300);
+  --color-line-strong: var(--color-ink-900);
+  --color-accent: var(--color-clay-600);
+  --color-accent-hover: var(--color-clay-700);
+  --color-accent-soft: #f7ecE8;
+  --color-on-accent: #ffffff;
+
+  /* Square corners are a signature of this style. Only avatars round. */
+  --radius-card: 0px;
+
+  /* Shadows are mauve-tinted, never neutral grey */
+  --shadow-soft: 0 4px 12px rgb(146 128 129 / 0.28);
+  --shadow-lift: 0 8px 28px rgb(146 128 129 / 0.38);
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-surface: #120a16;
+    --color-surface-raised: #1c1020;
+    --color-surface-sunken: #0b050e;
+    /* Deliberately still dark: inverse bands carry light text in both themes. */
+    --color-surface-inverse: #190021;
+    --color-content: #f3eeec;
+    --color-content-muted: #c3b2bb;
+    --color-content-subtle: #9a8792;
+    --color-content-inverse: #ffffff;
+    --color-line: #33203a;
+    --color-line-strong: #6a5068;
+    --color-accent: #c5978c;
+    --color-accent-hover: #ddbfb6;
+    --color-accent-soft: #241620;
+    --color-on-accent: #14001b;
+
+    --shadow-soft: 0 4px 12px rgb(0 0 0 / 0.5);
+    --shadow-lift: 0 8px 28px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* ── Base ─────────────────────────────────────────────────────────── */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-content);
+    font-family: var(--font-sans);
+    font-size: 1.0875rem; /* 17.4px, matching the reference */
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Ovo ships a single weight; tight tracking is what gives it its voice. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    line-height: 1.14;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-clay-300);
+    color: var(--color-ink-900);
+  }
+}
+
+/* ── Reusable compositions ────────────────────────────────────────── */
+
+@utility container-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 76rem;
+  padding-inline: 1.25rem;
+
+  @media (width >= 48rem) {
+    padding-inline: 2rem;
+  }
+}
+
+@utility container-prose {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 44rem;
+  padding-inline: 1.25rem;
+
+  @media (width >= 48rem) {
+    padding-inline: 2rem;
+  }
+}
+
+@utility eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+@utility prose-mission {
+  color: var(--color-content-muted);
+  font-size: 1.0875rem;
+  line-height: 1.8;
+
+  & p + p {
+    margin-top: 1.4em;
+  }
+
+  & strong {
+    color: var(--color-content);
+    font-weight: 700;
+  }
+
+  & em {
+    font-style: italic;
+  }
+}
+
+/* A faint rule with a small centre diamond */
+@utility rule-sacred {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  &::before,
+  &::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: linear-gradient(to right, transparent, var(--color-clay-400), transparent);
+  }
+}
+
+/* ── Motion ───────────────────────────────────────────────────────── */
+
+/* Slow drift for the hero motion background */
+@keyframes slow-pan {
+  0%, 100% { transform: scale(1.06) translate3d(0, 0, 0); }
+  50%      { transform: scale(1.12) translate3d(0, -1.5%, 0); }
+}
+
+@utility motion-pan {
+  animation: slow-pan 22s ease-in-out infinite;
+}
+
+/* Ensure the hero video never shows letterboxing on tall phones */
+@utility hero-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility rise {
+  animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/*
+  Scroll reveal.
+
+  Written as plain rules rather than @utility: the nested attribute
+  selector does not survive @utility compilation, which silently left
+  every revealed element stuck at opacity 0.
+
+  Fail-safe in three ways — a JS timeout reveals everything after a
+  moment, <noscript> forces visibility, and reduced-motion opts out.
+*/
+@layer components {
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reveal[data-visible="true"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /*
+    When the fail-safe fires we jump straight to the final state. A
+    transition needs composited frames to advance; environments that do
+    not produce them would otherwise leave the element stuck at the
+    starting value, i.e. invisible.
+  */
+  .reveal[data-instant="true"] {
+    transition: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal[data-visible="false"] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
