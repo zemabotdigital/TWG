@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, CalendarDays, Clock, MapPin, Users, Video } from "lucide-react";
-import type { Event, Yatra } from "@/generated/prisma/client";
+import type { Event, Yatra } from "@/content/catalogue";
 import { Badge, Card } from "./ui";
 import { BookButton } from "./book-button";
 import { routeForSlug } from "@/content/cta-routes";

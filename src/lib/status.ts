@@ -1,4 +1,4 @@
-import type { BookingStatus, EventStatus, YatraStatus } from "@/generated/prisma/client";
+import type { BookingStatus, EventStatus, YatraStatus } from "@/content/catalogue";
 
 type Tone = "neutral" | "accent" | "temple" | "green" | "amber" | "red" | "blue";
 

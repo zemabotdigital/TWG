@@ -4,7 +4,7 @@ import { EmptyState, Section, SectionHeading } from "@/components/ui";
 import { PageHeader } from "@/components/page-header";
 import { getPastEvents, getUpcomingEvents } from "@/lib/queries";
 import { formatDate, formatMonthYear } from "@/lib/format";
-import type { Event } from "@/generated/prisma/client";
+import type { Event } from "@/content/catalogue";
 
 export const metadata: Metadata = {
   title: "Events — satsangs, discourses and observances",

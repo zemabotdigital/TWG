@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Mail, MapPin, MessageCircle, Phone, ShoppingBag } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Card, Section } from "@/components/ui";
-import { ContactForm } from "@/components/forms/contact-form";
+import { WhatsAppHandoff } from "@/components/forms/whatsapp-handoff";
 import { BookButton } from "@/components/book-button";
 import { getSettings, storeIsConfigured } from "@/lib/settings";
 
@@ -31,7 +31,12 @@ export default async function ContactPage() {
       <Section className="pt-6">
         <div className="container-page grid gap-12 lg:grid-cols-[1fr_20rem] lg:items-start lg:gap-16">
           <Card className="p-7 md:p-9">
-            <ContactForm />
+            <WhatsAppHandoff
+              route="general"
+              title="Write to the mission"
+              body="Questions about a journey, an event, or anything else — send a message on WhatsApp and someone will come back to you. For anything urgent, please call the number on this page."
+              sourcePage="/contact"
+            />
           </Card>
 
           <aside className="space-y-4">

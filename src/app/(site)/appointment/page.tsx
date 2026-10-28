@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CalendarCheck, HeartHandshake, Lock, MessageCircle } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Card, Section } from "@/components/ui";
-import { AppointmentForm } from "@/components/forms/appointment-form";
+import { WhatsAppHandoff } from "@/components/forms/whatsapp-handoff";
 
 export const metadata: Metadata = {
   title: "Request a one-to-one with Maharaj",
@@ -57,7 +57,13 @@ export default function AppointmentPage() {
           </aside>
 
           <Card className="p-7 md:p-9">
-            <AppointmentForm />
+            <WhatsAppHandoff
+              route="maharaj_appointment"
+              title="Request a time with Maharaja"
+              body="Send your request on WhatsApp — your name, where you are, whether you would like to meet in person at Thrissur or by video call, and the times that suit you. The mission will confirm a time with you directly."
+              note="No fee is charged for sitting with Maharaja. Whatever you write is held in confidence."
+              sourcePage="/appointment"
+            />
           </Card>
         </div>
       </Section>

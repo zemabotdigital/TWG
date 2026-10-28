@@ -1,5 +1,17 @@
-import { prisma } from "./db";
-import type { Yatra } from "@/generated/prisma/client";
+import { events, yatras, type Yatra } from "@/content/catalogue";
+
+/**
+ * Read access to the published catalogue.
+ *
+ * These were database queries. The site is now frontend-only, so they filter
+ * the static catalogue instead. Signatures and return shapes are unchanged,
+ * which is why no page or component needed editing.
+ *
+ * Seat counts: bookings used to be stored and tallied here. Tickets are now
+ * sold on the external store, which this site cannot read, so remaining seats
+ * are reported as the published capacity rather than a live figure. Nothing
+ * is invented — the number shown is the stated capacity.
+ */
 
 /** Start of today in server time — events earlier today still count as upcoming. */
 function startOfToday() {
@@ -8,94 +20,65 @@ function startOfToday() {
   return d;
 }
 
-/**
- * Seats taken counts CONFIRMED bookings only. A pending request has not been
- * accepted yet, so it must not consume a seat — otherwise unanswered enquiries
- * would silently close a departure.
- */
-export async function seatsTakenByYatra(yatraIds: string[]) {
-  if (yatraIds.length === 0) return new Map<string, number>();
-
-  const rows = await prisma.yatraBooking.groupBy({
-    by: ["yatraId"],
-    where: { yatraId: { in: yatraIds }, status: "CONFIRMED" },
-    _sum: { travellers: true },
-  });
-
-  return new Map(rows.map((r) => [r.yatraId, r._sum.travellers ?? 0]));
-}
-
-export function seatsLeft(yatra: Yatra, taken: number) {
-  return Math.max(0, yatra.seatsTotal - taken);
+export function seatsLeft(yatra: Yatra) {
+  return yatra.seatsTotal;
 }
 
 export async function getUpcomingYatras(limit?: number) {
-  const yatras = await prisma.yatra.findMany({
-    where: {
-      status: { in: ["ANNOUNCED", "FILLING", "FULL"] },
-      departureDate: { gte: startOfToday() },
-    },
-    orderBy: { departureDate: "asc" },
-    take: limit,
-  });
+  const open = yatras
+    .filter(
+      (y) =>
+        ["ANNOUNCED", "FILLING", "FULL"].includes(y.status) &&
+        y.departureDate >= startOfToday(),
+    )
+    .sort((a, b) => a.departureDate.getTime() - b.departureDate.getTime());
 
-  const taken = await seatsTakenByYatra(yatras.map((y) => y.id));
-  return yatras.map((y) => ({ yatra: y, seatsLeft: seatsLeft(y, taken.get(y.id) ?? 0) }));
+  const take = limit ? open.slice(0, limit) : open;
+  return take.map((yatra) => ({ yatra, seatsLeft: seatsLeft(yatra) }));
 }
 
 export async function getPastYatras(limit = 6) {
-  return prisma.yatra.findMany({
-    where: {
-      OR: [{ status: "COMPLETED" }, { departureDate: { lt: startOfToday() } }],
-      NOT: { status: "DRAFT" },
-    },
-    orderBy: { departureDate: "desc" },
-    take: limit,
-  });
+  return yatras
+    .filter(
+      (y) =>
+        y.status !== "DRAFT" &&
+        (y.status === "COMPLETED" || y.departureDate < startOfToday()),
+    )
+    .sort((a, b) => b.departureDate.getTime() - a.departureDate.getTime())
+    .slice(0, limit);
 }
 
 export async function getYatraBySlug(slug: string) {
-  const yatra = await prisma.yatra.findUnique({ where: { slug } });
+  const yatra = yatras.find((y) => y.slug === slug);
   if (!yatra || yatra.status === "DRAFT") return null;
-
-  const taken = await seatsTakenByYatra([yatra.id]);
-  return { yatra, seatsLeft: seatsLeft(yatra, taken.get(yatra.id) ?? 0) };
+  return { yatra, seatsLeft: seatsLeft(yatra) };
 }
 
 export async function getUpcomingEvents(limit?: number) {
-  return prisma.event.findMany({
-    where: { status: "PUBLISHED", startsAt: { gte: startOfToday() } },
-    orderBy: { startsAt: "asc" },
-    take: limit,
-  });
+  const open = events
+    .filter((e) => e.status === "PUBLISHED" && e.startsAt >= startOfToday())
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+
+  return limit ? open.slice(0, limit) : open;
 }
 
 export async function getPastEvents(limit = 8) {
-  return prisma.event.findMany({
-    where: {
-      status: { in: ["PUBLISHED", "COMPLETED"] },
-      startsAt: { lt: startOfToday() },
-    },
-    orderBy: { startsAt: "desc" },
-    take: limit,
-  });
+  return events
+    .filter(
+      (e) =>
+        ["PUBLISHED", "COMPLETED"].includes(e.status) && e.startsAt < startOfToday(),
+    )
+    .sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime())
+    .slice(0, limit);
 }
 
 export async function getEventBySlug(slug: string) {
-  const event = await prisma.event.findUnique({
-    where: { slug },
-    include: { _count: { select: { registrations: true } } },
-  });
+  const event = events.find((e) => e.slug === slug);
   if (!event || event.status === "DRAFT") return null;
   return event;
 }
 
 /** Seats remaining at an event, or null when the event has no capacity limit. */
-export async function eventSeatsLeft(eventId: string, capacity: number | null) {
-  if (capacity === null) return null;
-  const agg = await prisma.eventRegistration.aggregate({
-    where: { eventId, status: { in: ["CONFIRMED", "PENDING"] } },
-    _sum: { seats: true },
-  });
-  return Math.max(0, capacity - (agg._sum.seats ?? 0));
+export async function eventSeatsLeft(_eventId: string, capacity: number | null) {
+  return capacity;
 }
